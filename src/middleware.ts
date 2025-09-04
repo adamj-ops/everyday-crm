@@ -29,8 +29,12 @@ export default clerkMiddleware(async (auth, req) => {
     && !authObj.orgId
     && (req.nextUrl.pathname.includes('/dashboard') || req.nextUrl.pathname.includes('/deals'))
     && !req.nextUrl.pathname.includes('/organization-selection')
+    && !req.nextUrl.pathname.includes('/onboarding')
   ) {
-    const orgSelection = new URL('/onboarding/organization-selection', req.url);
+    // Extract locale from pathname for proper redirect
+    const localeMatch = req.nextUrl.pathname.match(/^\/([a-z]{2})\//);
+    const locale = localeMatch ? localeMatch[1] : '';
+    const orgSelection = new URL(`${locale}/onboarding/organization-selection`, req.url);
     return Response.redirect(orgSelection);
   }
 
