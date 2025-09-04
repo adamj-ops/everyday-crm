@@ -1,5 +1,6 @@
 import {
   bigint,
+  integer,
   pgTable,
   serial,
   text,
@@ -51,6 +52,24 @@ export const todoSchema = pgTable('todo', {
   ownerId: text('owner_id').notNull(),
   title: text('title').notNull(),
   message: text('message').notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+// Documents table for file storage with Vercel Blob
+export const documentsSchema = pgTable('documents', {
+  id: serial('id').primaryKey(),
+  orgId: text('org_id').notNull(),
+  type: text('type').notNull(), // e.g., 'disclosure', 'contract', etc.
+  title: text('title').notNull(),
+  blobUrl: text('blob_url').notNull(), // Direct URL for downloads/previews
+  blobPath: text('blob_path').notNull(), // Logical path for grouping (e.g., deals/123/...)
+  mimeType: text('mime_type'),
+  fileSize: integer('file_size'),
+  dealId: text('deal_id'), // Optional association with deals
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()
     .$onUpdate(() => new Date())

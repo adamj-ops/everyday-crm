@@ -43,6 +43,7 @@
     "@spotlightjs/spotlight": "^2.5.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tanstack/react-table": "^8.20.5",
+    "@vercel/blob": "^1.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.35.1",
@@ -50,7 +51,7 @@
     "next": "^14.2.25",
     "next-intl": "^3.21.1",
     "next-themes": "^0.3.0",
-    "pg": "^8.13.0",
+    "pg": "^8.16.3",
     "pino": "^9.5.0",
     "pino-pretty": "^11.3.0",
     "react": "^18.3.1",
@@ -59,7 +60,7 @@
     "sharp": "^0.33.5",
     "stripe": "^16.12.0",
     "tailwind-merge": "^2.5.4",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",
@@ -89,7 +90,7 @@
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22.7.6",
-    "@types/pg": "^8.11.10",
+    "@types/pg": "^8.15.5",
     "@types/react": "^18.3.11",
     "@vitejs/plugin-react": "^4.3.2",
     "@vitest/coverage-v8": "^2.1.9",
