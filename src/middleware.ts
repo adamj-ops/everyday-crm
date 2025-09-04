@@ -1,4 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 import createMiddleware from 'next-intl/middleware';
 
 import { AllLocales, AppConfig } from './utils/AppConfig';
@@ -9,28 +9,17 @@ const intlMiddleware = createMiddleware({
   defaultLocale: AppConfig.defaultLocale,
 });
 
-const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/:locale/dashboard(.*)',
-  '/deals(.*)',
-  '/:locale/deals(.*)',
-  '/onboarding(.*)',
-  '/:locale/onboarding(.*)',
-  '/api/deals(.*)',
-  '/api/offers(.*)',
-  '/api/documents(.*)',
-  '/:locale/api(.*)',
-]);
-
 export default clerkMiddleware(async (auth, req) => {
-  // Check if this is a protected route
-  if (isProtectedRoute(req)) {
-    const locale = req.nextUrl.pathname.match(/(\/.*)\/(?:dashboard|deals)/)?.at(1) ?? '';
-    const signInUrl = new URL(`${locale}/sign-in`, req.url);
-
-    await auth.protect({
-      unauthenticatedUrl: signInUrl.toString(),
-    });
+  // Protect specific routes
+  if (
+    req.nextUrl.pathname.startsWith('/dashboard')
+    || req.nextUrl.pathname.startsWith('/deals')
+    || req.nextUrl.pathname.startsWith('/onboarding')
+    || req.nextUrl.pathname.startsWith('/api/deals')
+    || req.nextUrl.pathname.startsWith('/api/offers')
+    || req.nextUrl.pathname.startsWith('/api/documents')
+  ) {
+    await auth.protect();
   }
 
   // Check for organization selection redirect
@@ -39,12 +28,9 @@ export default clerkMiddleware(async (auth, req) => {
     authObj.userId
     && !authObj.orgId
     && (req.nextUrl.pathname.includes('/dashboard') || req.nextUrl.pathname.includes('/deals'))
-    && !req.nextUrl.pathname.endsWith('/organization-selection')
+    && !req.nextUrl.pathname.includes('/organization-selection')
   ) {
-    const orgSelection = new URL(
-      '/onboarding/organization-selection',
-      req.url,
-    );
+    const orgSelection = new URL('/onboarding/organization-selection', req.url);
     return Response.redirect(orgSelection);
   }
 
