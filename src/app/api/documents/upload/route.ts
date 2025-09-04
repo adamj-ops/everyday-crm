@@ -4,14 +4,14 @@ import { put } from '@vercel/blob';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { devOrgId, devUserId, withRls } from '@/server/db';
+import { getCurrentAuth, withRls } from '@/server/db';
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId, orgId } = await getCurrentAuth();
     const form = await req.formData();
     const file = form.get('file') as File;
     const dealId = form.get('dealId') as string;
-    const orgId = devOrgId; // replace with real org from your auth/session
 
     if (!file || !dealId) {
       return NextResponse.json({ error: 'Missing file or dealId' }, { status: 400 });
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const { url } = await put(key, file, { access: 'public' }); // <- blob_url
 
     // persist in DB using raw SQL
-    const row = await withRls(devUserId, orgId, async (client) => {
+    const row = await withRls(userId, orgId, async (client) => {
       const result = await client.query(
         `INSERT INTO documents (org_id, type, title, blob_url, blob_path, mime_type, file_size, deal_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

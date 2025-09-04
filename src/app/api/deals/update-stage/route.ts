@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { devOrgId, devUserId, withRls } from '@/server/db';
+import { getCurrentAuth, withRls } from '@/server/db';
 
 const UpdateStageBody = z.object({
   dealId: z.string().uuid(),
@@ -11,15 +11,16 @@ const UpdateStageBody = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId, orgId } = await getCurrentAuth();
     const body = UpdateStageBody.parse(await req.json());
 
-    const updatedDeal = await withRls(devUserId, devOrgId, async (client) => {
+    const updatedDeal = await withRls(userId, orgId, async (client) => {
       const result = await client.query(
         `UPDATE deals 
          SET stage = $1, updated_at = CURRENT_TIMESTAMP
          WHERE id = $2 AND org_id = $3
          RETURNING *`,
-        [body.newStage, body.dealId, devOrgId],
+        [body.newStage, body.dealId, orgId],
       );
 
       if (!result.rowCount) {

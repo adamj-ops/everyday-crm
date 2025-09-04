@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { devOrgId, devUserId, withRls } from '@/server/db';
+import { getCurrentAuth, withRls } from '@/server/db';
 
 const AcceptOfferBody = z.object({
   offerId: z.string().uuid(),
@@ -11,13 +11,14 @@ const AcceptOfferBody = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId, orgId } = await getCurrentAuth();
     const body = AcceptOfferBody.parse(await req.json());
 
-    const assignment = await withRls(devUserId, devOrgId, async (client) => {
+    const assignment = await withRls(userId, orgId, async (client) => {
       // First, update the offer status to 'accepted'
       const accepted = await client.query(
         'UPDATE offers SET status = \'accepted\' WHERE id = $1 AND EXISTS (SELECT 1 FROM deals WHERE deals.id = offers.deal_id AND deals.org_id = $2) RETURNING deal_id, buyer_contact_id',
-        [body.offerId, devOrgId],
+        [body.offerId, orgId],
       );
 
       if (!accepted.rowCount) {

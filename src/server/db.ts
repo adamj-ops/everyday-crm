@@ -1,10 +1,33 @@
+import { auth } from '@clerk/nextjs/server';
 import { Pool } from 'pg';
 
 import { Env } from '@/libs/Env';
 
-// Development constants - get from environment variables
+// Development constants - get from environment variables (fallback for testing)
 export const devUserId = process.env.DEV_USER_ID || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 export const devOrgId = process.env.DEV_ORG_ID || '11111111-1111-1111-1111-111111111111';
+
+/**
+ * Get current user and organization from Clerk authentication
+ */
+export async function getCurrentAuth() {
+  const { userId, orgId } = await auth();
+
+  // In development, fall back to dev constants if no auth
+  if (!userId && process.env.NODE_ENV === 'development') {
+    return { userId: devUserId, orgId: devOrgId };
+  }
+
+  if (!userId) {
+    throw new Error('Unauthorized: No user found');
+  }
+
+  if (!orgId) {
+    throw new Error('No organization selected');
+  }
+
+  return { userId, orgId };
+}
 
 // Create a connection pool for PostgreSQL
 let pool: Pool | null = null;

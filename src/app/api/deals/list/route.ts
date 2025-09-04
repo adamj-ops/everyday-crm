@@ -1,14 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { devOrgId, devUserId, withRls } from '@/server/db';
+import { getCurrentAuth, withRls } from '@/server/db';
 
 export async function GET(req: NextRequest) {
   try {
+    const { userId, orgId } = await getCurrentAuth();
     const { searchParams } = new URL(req.url);
     const stage = searchParams.get('stage');
 
-    const deals = await withRls(devUserId, devOrgId, async (client) => {
+    const deals = await withRls(userId, orgId, async (client) => {
       let query = `
         SELECT 
           d.id,
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
         WHERE d.org_id = $1
       `;
 
-      const params = [devOrgId];
+      const params = [orgId];
 
       if (stage) {
         query += ` AND d.stage = $2`;

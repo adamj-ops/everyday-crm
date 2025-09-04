@@ -1,9 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import {
-  type NextFetchEvent,
-  type NextRequest,
-  NextResponse,
-} from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 
 import { AllLocales, AppConfig } from './utils/AppConfig';
@@ -17,56 +12,44 @@ const intlMiddleware = createMiddleware({
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/:locale/dashboard(.*)',
+  '/deals(.*)',
+  '/:locale/deals(.*)',
   '/onboarding(.*)',
   '/:locale/onboarding(.*)',
-  '/api(.*)',
+  '/api/deals(.*)',
+  '/api/offers(.*)',
+  '/api/documents(.*)',
   '/:locale/api(.*)',
 ]);
 
-export default function middleware(
-  request: NextRequest,
-  event: NextFetchEvent,
-) {
-  if (
-    request.nextUrl.pathname.includes('/sign-in')
-    || request.nextUrl.pathname.includes('/sign-up')
-    || isProtectedRoute(request)
-  ) {
-    return clerkMiddleware(async (auth, req) => {
-      if (isProtectedRoute(req)) {
-        const locale
-          = req.nextUrl.pathname.match(/(\/.*)\/dashboard/)?.at(1) ?? '';
+export default clerkMiddleware(async (auth, req) => {
+  // Check if this is a protected route
+  if (isProtectedRoute(req)) {
+    const locale = req.nextUrl.pathname.match(/(\/.*)\/(?:dashboard|deals)/)?.at(1) ?? '';
+    const signInUrl = new URL(`${locale}/sign-in`, req.url);
 
-        const signInUrl = new URL(`${locale}/sign-in`, req.url);
-
-        await auth.protect({
-          // `unauthenticatedUrl` is needed to avoid error: "Unable to find `next-intl` locale because the middleware didn't run on this request"
-          unauthenticatedUrl: signInUrl.toString(),
-        });
-      }
-
-      const authObj = await auth();
-
-      if (
-        authObj.userId
-        && !authObj.orgId
-        && req.nextUrl.pathname.includes('/dashboard')
-        && !req.nextUrl.pathname.endsWith('/organization-selection')
-      ) {
-        const orgSelection = new URL(
-          '/onboarding/organization-selection',
-          req.url,
-        );
-
-        return NextResponse.redirect(orgSelection);
-      }
-
-      return intlMiddleware(req);
-    })(request, event);
+    await auth.protect({
+      unauthenticatedUrl: signInUrl.toString(),
+    });
   }
 
-  return intlMiddleware(request);
-}
+  // Check for organization selection redirect
+  const authObj = await auth();
+  if (
+    authObj.userId
+    && !authObj.orgId
+    && (req.nextUrl.pathname.includes('/dashboard') || req.nextUrl.pathname.includes('/deals'))
+    && !req.nextUrl.pathname.endsWith('/organization-selection')
+  ) {
+    const orgSelection = new URL(
+      '/onboarding/organization-selection',
+      req.url,
+    );
+    return Response.redirect(orgSelection);
+  }
+
+  return intlMiddleware(req);
+});
 
 export const config = {
   matcher: ['/((?!.+\\.[\\w]+$|_next|monitoring).*)', '/', '/(api|trpc)(.*)'], // Also exclude tunnelRoute used in Sentry from the matcher
