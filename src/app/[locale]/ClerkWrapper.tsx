@@ -37,6 +37,12 @@ export function ClerkWrapper({ children, locale }: ClerkWrapperProps) {
       signInFallbackRedirectUrl={dashboardUrl}
       signUpFallbackRedirectUrl={dashboardUrl}
       afterSignOutUrl={afterSignOutUrl}
+      appearance={{
+        elements: {
+          rootBox: 'w-full',
+          card: 'w-full max-w-md mx-auto',
+        },
+      }}
     >
       {children}
     </ClerkProvider>
